@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Alura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ac:#b9a7ff;--tx:#f3f1ff;--mu:#a9a5c4;--gl:rgba(255,255,255,.06);--bd:rgba(255,255,255,.15)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:Outfit,system-ui,sans-serif;color:var(--tx);background:#0d0b1a;overflow:hidden;
+background-image:radial-gradient(60% 40% at 15% 10%,rgba(150,120,255,.45),transparent),radial-gradient(50% 40% at 90% 30%,rgba(90,170,255,.3),transparent),radial-gradient(60% 50% at 40% 100%,rgba(255,130,200,.25),transparent)}
+.gl{background:var(--gl);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--bd);box-shadow:0 10px 40px rgba(120,90,255,.18)}
+#app,#auth{height:100%;display:none;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#auth{align-items:center;justify-content:center;padding:20px}
+.card{width:100%;max-width:380px;border-radius:28px;padding:28px 22px}
+h1{font-weight:300;font-size:34px;letter-spacing:.5px}h2{font-weight:500;font-size:18px}
+.sub{color:var(--mu);font-size:14px;margin:6px 0 18px}
+input{width:100%;margin:6px 0;padding:13px 15px;border-radius:14px;border:1px solid var(--bd);background:rgba(0,0,0,.3);color:var(--tx);font:inherit;font-size:16px;outline:0}
+input:focus{box-shadow:0 0 0 3px rgba(185,167,255,.35);border-color:var(--ac)}
+button{font:inherit;cursor:pointer;color:var(--tx)}
+.btn{width:100%;margin-top:10px;padding:13px;border-radius:999px;border:0;background:var(--ac);color:#1b1535;font-weight:600}
+.btn.sm{width:auto;margin:0;padding:8px 16px;font-size:14px}
+.lnk{background:none;border:0;color:var(--mu);margin-top:14px;width:100%;font-size:14px}
+.err{color:#ffb3c1;font-size:14px;min-height:20px;margin-top:8px}
+header{padding:16px 20px 8px;display:flex;align-items:center;gap:10px}
+header h2{flex:1}
+main{flex:1;overflow-y:auto;padding:6px 14px 14px}
+nav{display:flex;margin:0 14px calc(12px + env(safe-area-inset-bottom));border-radius:999px;padding:6px}
+nav button{flex:1;padding:11px;border:0;background:none;border-radius:999px;color:var(--mu);font-size:15px}
+nav button.on{background:rgba(185,167,255,.22);color:var(--tx)}
+.row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;margin-bottom:8px;width:100%;text-align:left}
+.av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#7fc4ff);display:grid;place-items:center;font-weight:600;color:#1b1535;flex:none}
+.row b{display:block;font-weight:500}.row small{color:var(--mu)}
+.empty{color:var(--mu);text-align:center;padding:40px 20px;font-size:15px}
+#chat{position:absolute;inset:0;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);background:rgba(13,11,26,.55);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+#msgs{flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:78%;padding:9px 14px;border-radius:18px;font-size:16px;line-height:1.35;word-wrap:break-word}
+.m.me{align-self:flex-end;background:rgba(185,167,255,.28)}.m.th{align-self:flex-start;background:var(--gl);border:1px solid var(--bd)}
+.bar{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.bar input{margin:0;flex:1;border-radius:999px}
+.x{background:none;border:0;font-size:22px;color:var(--tx)}
+.sec{color:var(--mu);font-size:14px;margin:14px 4px 8px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<div id="auth"><div class="card gl">
+ <h1>Alura</h1><p class="sub" id="asub">Conversas privadas, sem barulho.</p>
+ <input id="nm" placeholder="Nome exibido" style="display:none">
+ <input id="hd" placeholder="Nick único (ex: maria_22)" autocapitalize="none" style="display:none">
+ <input id="em" type="email" placeholder="E-mail (Gmail)" autocapitalize="none">
+ <input id="pw" type="password" placeholder="Senha (mínimo 6 caracteres)">
+ <div class="err" id="aerr"></div>
+ <button class="btn" id="abtn">Entrar</button>
+ <button class="lnk" id="atog">Não tem conta? Criar conta</button>
+</div></div>
+
+<div id="app">
+ <header><h2 id="ttl">Conversas</h2></header>
+ <main id="main"></main>
+ <nav class="gl"><button data-t="c" class="on">Conversas</button><button data-t="a">Amigos</button><button data-t="p">Perfil</button></nav>
+ <div id="chat">
+  <header class="gl" style="margin:10px 12px;border-radius:20px"><button class="x" id="back">‹</button><h2 id="cname"></h2></header>
+  <div id="msgs"></div>
+  <div class="bar"><input id="mi" placeholder="Mensagem" autocomplete="off"><button class="btn sm" id="send">Enviar</button></div>
+ </div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const sb=supabase.createClient(ALURA.url,ALURA.key);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let me,prof,fr=[],cur=null,tab='c',signup=false,pmap={};
+
+$('#atog').onclick=()=>{signup=!signup;['#nm','#hd'].forEach(s=>$(s).style.display=signup?'block':'none');
+ $('#abtn').textContent=signup?'Criar conta':'Entrar';$('#atog').textContent=signup?'Já tem conta? Entrar':'Não tem conta? Criar conta';$('#aerr').textContent=''};
+
+$('#abtn').onclick=async()=>{
+ const e=$('#em').value.trim(),p=$('#pw').value,er=$('#aerr');er.textContent='';
+ if(!e||p.length<6){er.textContent='Preencha e-mail e uma senha de 6+ caracteres.';return}
+ if(signup){
+  const h=$('#hd').value.trim().toLowerCase().replace(/^@/,''),n=$('#nm').value.trim()||h;
+  if(!/^[a-z0-9_]{3,20}$/.test(h)){er.textContent='Nick: 3 a 20 letras minúsculas, números ou _';return}
+  const {data:ok}=await sb.rpc('handle_disponivel',{h});
+  if(!ok){er.textContent='Esse nick já existe. Escolha outro.';return}
+  const {data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{handle:h,display_name:n}}});
+  if(error){er.textContent=error.message;return}
+  if(!data.session){er.textContent='Conta criada! Confirme pelo e-mail e depois entre.';return}
+ }else{
+  const {error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(error){er.textContent=error.message.includes('Invalid')?'E-mail ou senha incorretos.':error.message;return}
+ }
+ start();
+};
+
+async function start(){
+ const {data:{session}}=await sb.auth.getSession();
+ if(!session){$('#auth').style.display='flex';$('#app').style.display='none';return}
+ me=session.user;
+ const {data}=await sb.from('profiles').select('*').eq('id',me.id).single();prof=data;
+ $('#auth').style.display='none';$('#app').style.display='flex';
+ await load();
+ sb.channel('rt').on('postgres_changes',{event:'*',schema:'public',table:'friendships'},load)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>{
+   const m=p.new;if(cur&&(m.sender===cur.id||m.receiver===cur.id))addMsg(m)}).subscribe();
+}
+
+async function load(){
+ const {data:f}=await sb.from('friendships').select('*');fr=f||[];
+ const ids=[...new Set(fr.flatMap(x=>[x.requester,x.addressee]))].filter(i=>i!==me.id);
+ pmap={};if(ids.length){const {data:ps}=await sb.from('profiles').select('*').in('id',ids);(ps||[]).forEach(x=>pmap[x.id]=x)}
+ render();
+}
+const other=f=>pmap[f.requester===me.id?f.addressee:f.requester];
+const ini=p=>esc((p?.display_name||'?')[0].toUpperCase());
+const rowH=(p,extra='',id='')=>`<${id?'button':'div'} class="row gl" ${id?`data-id="${id}"`:''}><div class="av">${ini(p)}</div><div style="flex:1"><b>${esc(p.display_name)}</b><small>@${esc(p.handle)}</small></div>${extra}</${id?'button':'div'}>`;
+
+function render(){
+ const m=$('#main');$('#ttl').textContent={c:'Conversas',a:'Amigos',p:'Perfil'}[tab];
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ if(tab==='c'){
+  const ok=fr.filter(f=>f.status==='accepted').map(other).filter(Boolean);
+  m.innerHTML=ok.length?ok.map(p=>rowH(p,'',p.id)).join(''):'<div class="empty">Nenhuma conversa ainda.<br>Adicione um amigo pelo @nick na aba Amigos.</div>';
+  m.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openChat(pmap[b.dataset.id]));
+ }else if(tab==='a'){
+  const inc=fr.filter(f=>f.status==='pending'&&f.addressee===me.id),out=fr.filter(f=>f.status==='pending'&&f.requester===me.id);
+  m.innerHTML=`<div class="row gl"><input id="addh" placeholder="@nick do amigo" autocapitalize="none" style="margin:0"><button class="btn sm" id="addb">Adicionar</button></div><div class="err" id="aderr"></div>
+  ${inc.length?'<div class="sec">Pedidos recebidos</div>'+inc.map(f=>rowH(other(f)||{display_name:'?',handle:'?'},`<button class="btn sm" data-ac="${f.id}">Aceitar</button>`)).join(''):''}
+  ${out.length?'<div class="sec">Pedidos enviados</div>'+out.map(f=>rowH(other(f)||{display_name:'?',handle:'?'},'<small>aguardando</small>')).join(''):''}`;
+  $('#addb').onclick=addFriend;
+  m.querySelectorAll('[data-ac]').forEach(b=>b.onclick=async()=>{await sb.from('friendships').update({status:'accepted'}).eq('id',b.dataset.ac);load()});
+ }else{
+  m.innerHTML=`<div class="card gl" style="max-width:none"><div class="av" style="width:72px;height:72px;font-size:28px;margin-bottom:12px">${ini(prof)}</div>
+  <input id="pn" value="${esc(prof.display_name)}" placeholder="Nome exibido"><small style="color:var(--mu);margin-left:6px">@${esc(prof.handle)} (o nick não pode ser alterado)</small>
+  <input id="pb" value="${esc(prof.bio||'')}" maxlength="300" placeholder="Bio (até 300 caracteres)" style="margin-top:12px">
+  <div class="err" id="perr"></div><button class="btn" id="psave">Salvar</button><button class="lnk" id="out">Sair da conta</button></div>`;
+  $('#psave').onclick=async()=>{const n=$('#pn').value.trim();if(!n){$('#perr').textContent='O nome não pode ficar vazio.';return}
+   const {error}=await sb.from('profiles').update({display_name:n,bio:$('#pb').value}).eq('id',me.id);
+   if(error){$('#perr').textContent=error.message;return}prof.display_name=n;prof.bio=$('#pb').value;$('#perr').style.color='#b9ffd0';$('#perr').textContent='Salvo.'};
+  $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
+ }
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+
+async function addFriend(){
+ const h=$('#addh').value.trim().toLowerCase().replace(/^@/,''),er=$('#aderr');er.textContent='';
+ if(!h)return;if(h===prof.handle){er.textContent='Esse é o seu próprio nick.';return}
+ const {data:p}=await sb.from('profiles').select('id').eq('handle',h).maybeSingle();
+ if(!p){er.textContent='Nick não encontrado.';return}
+ const {error}=await sb.from('friendships').insert({requester:me.id,addressee:p.id});
+ if(error){er.textContent=error.code==='23505'?'Pedido já enviado.':error.message;return}
+ load();
+}
+
+async function openChat(p){
+ cur=p;$('#cname').textContent=p.display_name;$('#chat').style.display='flex';$('#msgs').innerHTML='';
+ const {data}=await sb.from('messages').select('*').or(`and(sender.eq.${me.id},receiver.eq.${p.id}),and(sender.eq.${p.id},receiver.eq.${me.id})`).order('created_at').limit(200);
+ (data||[]).forEach(addMsg);
+}
+const seen=new Set();
+function addMsg(m){
+ if(document.getElementById('m'+m.id))return;
+ const d=document.createElement('div');d.id='m'+m.id;d.className='m '+(m.sender===me.id?'me':'th');d.textContent=m.content;
+ const b=$('#msgs');b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+$('#back').onclick=()=>{cur=null;$('#chat').style.display='none'};
+async function send(){
+ const t=$('#mi').value.trim();if(!t||!cur)return;$('#mi').value='';
+ const {data,error}=await sb.from('messages').insert({sender:me.id,receiver:cur.id,content:t}).select().single();
+ if(error){alert('Não foi possível enviar: '+error.message);return}addMsg(data);
+}
+$('#send').onclick=send;$('#mi').onkeydown=e=>{if(e.key==='Enter')send()};
+start();
+</script></body></html>
