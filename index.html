@@ -9,7 +9,7 @@
 html,body{height:100%}
 body{font-family:Outfit,system-ui,sans-serif;color:var(--tx);background:#0d0b1a;overflow:hidden;
 background-image:radial-gradient(60% 40% at 15% 10%,rgba(150,120,255,.45),transparent),radial-gradient(50% 40% at 90% 30%,rgba(90,170,255,.3),transparent),radial-gradient(60% 50% at 40% 100%,rgba(255,130,200,.25),transparent)}
-.gl{background:var(--gl);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--bd);box-shadow:0 10px 40px rgba(120,90,255,.18)}
+.gl{background:var(--gl);backdrop-filter:blur(var(--bl,24px));-webkit-backdrop-filter:blur(var(--bl,24px));border:1px solid var(--bd);box-shadow:0 10px 40px rgba(120,90,255,.18)}
 #app,#auth{height:100%;display:none;flex-direction:column;padding-top:env(safe-area-inset-top)}
 #auth{align-items:center;justify-content:center;padding:20px}
 .card{width:100%;max-width:380px;border-radius:28px;padding:28px 22px}
@@ -40,47 +40,80 @@ nav button.on{background:rgba(185,167,255,.22);color:var(--tx)}
 .bar input{margin:0;flex:1;border-radius:999px}
 .x{background:none;border:0;font-size:22px;color:var(--tx)}
 .sec{color:var(--mu);font-size:14px;margin:14px 4px 8px}
+body.lt{--tx:#1d1a33;--mu:#6b6788;--gl:rgba(255,255,255,.55);--bd:rgba(80,60,160,.2);background-color:#eceaff}
+body.lt input,body.lt textarea{background:rgba(255,255,255,.6)!important}
+body.lt #chat{background:rgba(236,234,255,.6)}
+body.hc .gl{backdrop-filter:none;-webkit-backdrop-filter:none;background:#000;border-color:#fff}
+body.hc{background:#000}body.lt.hc{background:#fff}body.lt.hc .gl{background:#fff;border-color:#000}
+body.rm *{transition:none!important;animation:none!important}
+nav button{font-size:13px!important;padding:11px 4px!important}
+.av{border-radius:50%;flex:none}
+.rx{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.chip{border:1px solid var(--bd);background:var(--gl);border-radius:999px;padding:2px 8px;font-size:13px}.chip.on{border-color:var(--ac)}
+#sheet{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+.sh{width:100%;max-width:480px;border-radius:28px 28px 0 0;padding:14px 18px calc(18px + env(safe-area-inset-bottom));background:rgba(20,16,40,.9)!important;color:#f3f1ff;display:flex;flex-direction:column;gap:10px}
+.ems{display:flex;justify-content:space-around}.ems button{background:none;border:0;font-size:30px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 
-<div id="auth"><div class="card gl">
+<div id="auth"><div class="card gl" id="authbox">
  <h1>Alura</h1><p class="sub" id="asub">Conversas privadas, sem barulho.</p>
  <input id="nm" placeholder="Nome exibido" style="display:none">
  <input id="hd" placeholder="Nick único (ex: maria_22)" autocapitalize="none" style="display:none">
  <input id="em" type="email" placeholder="E-mail (Gmail)" autocapitalize="none">
  <input id="pw" type="password" placeholder="Senha (mínimo 6 caracteres)">
+ <input id="pw2" type="password" placeholder="Repita a senha" style="display:none">
+ <div class="sub" id="pwn" style="display:none;font-size:13px;margin:6px 0 0">⚠️ Anote sua senha em um lugar seguro. Se esquecer, use "Esqueci minha senha" na tela de entrada: o link chega no seu e-mail, então confira se ele está certo.</div>
  <div class="err" id="aerr"></div>
  <button class="btn" id="abtn">Entrar</button>
  <button class="lnk" id="atog">Não tem conta? Criar conta</button>
-</div></div>
+ <button class="lnk" id="forg" style="margin-top:4px">Esqueci minha senha</button>
+</div>
+<div class="card gl" id="recbox" style="display:none"><h1>Nova senha</h1><p class="sub">Escolha uma senha nova e anote em lugar seguro.</p>
+ <input id="rp1" type="password" placeholder="Nova senha (mínimo 6 caracteres)"><input id="rp2" type="password" placeholder="Repita a nova senha">
+ <div class="err" id="rerr"></div><button class="btn" id="rbtn">Salvar nova senha</button></div></div>
 
 <div id="app">
  <header><h2 id="ttl">Conversas</h2></header>
  <main id="main"></main>
- <nav class="gl"><button data-t="c" class="on">Conversas</button><button data-t="a">Amigos</button><button data-t="p">Perfil</button></nav>
+ <nav class="gl"><button data-t="c" class="on">Conversas</button><button data-t="a">Amigos</button><button data-t="p">Perfil</button><button data-t="s">Ajustes</button></nav>
  <div id="chat">
   <header class="gl" style="margin:10px 12px;border-radius:20px"><button class="x" id="back">‹</button><h2 id="cname"></h2></header>
   <div id="msgs"></div>
-  <div class="bar"><input id="mi" placeholder="Mensagem" autocomplete="off"><button class="btn sm" id="send">Enviar</button></div>
+  <div class="bar"><button class="x" id="att">📎</button><input type="file" id="fi" accept="image/*,video/*" hidden><input id="mi" placeholder="Mensagem" autocomplete="off"><button class="btn sm" id="send">Enviar</button></div>
  </div>
 </div>
 
+<div id="sheet"></div>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const sb=supabase.createClient(ALURA.url,ALURA.key);
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let me,prof,fr=[],cur=null,tab='c',signup=false,pmap={};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let me,prof,fr=[],gr=[],gmem=[],cur=null,tab='c',signup=false,pmap={},S={},newg=false;
+try{S=JSON.parse(localStorage.getItem('alura')||'{}')}catch(e){}
+function applyS(){const b=document.body.classList;b.toggle('lt',S.th==='l');b.toggle('hc',!!S.hc);b.toggle('rm',!!S.rm);document.documentElement.style.setProperty('--bl',(S.bl??24)+'px')}
+function saveS(){try{localStorage.setItem('alura',JSON.stringify(S))}catch(e){}applyS()}
+applyS();
+sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){window.__rec=1;$('#app').style.display='none';$('#auth').style.display='flex';$('#authbox').style.display='none';$('#recbox').style.display='block'}});
+$('#forg').onclick=async()=>{const e=$('#em').value.trim(),er=$('#aerr');er.style.color='';
+ if(!e){er.textContent='Digite seu e-mail acima e toque de novo em "Esqueci minha senha".';return}
+ const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
+ if(error){er.textContent=error.message;return}
+ er.style.color='#b9ffd0';er.textContent='Se esse e-mail tiver conta, enviamos um link para criar nova senha. Olhe também o spam.'};
+$('#rbtn').onclick=async()=>{const a=$('#rp1').value,er=$('#rerr');
+ if(a.length<6){er.textContent='Use 6 ou mais caracteres.';return}if(a!==$('#rp2').value){er.textContent='As senhas não são iguais.';return}
+ const {error}=await sb.auth.updateUser({password:a});if(error){er.textContent=error.message;return}
+ er.style.color='#b9ffd0';er.textContent='Senha alterada! Entrando...';setTimeout(()=>{window.__rec=0;location.href=location.origin+location.pathname},1200)};
 
-$('#atog').onclick=()=>{signup=!signup;['#nm','#hd'].forEach(s=>$(s).style.display=signup?'block':'none');
+$('#atog').onclick=()=>{signup=!signup;['#nm','#hd','#pw2','#pwn'].forEach(s=>$(s).style.display=signup?'block':'none');$('#forg').style.display=signup?'none':'block';
  $('#abtn').textContent=signup?'Criar conta':'Entrar';$('#atog').textContent=signup?'Já tem conta? Entrar':'Não tem conta? Criar conta';$('#aerr').textContent=''};
-
 $('#abtn').onclick=async()=>{
  const e=$('#em').value.trim(),p=$('#pw').value,er=$('#aerr');er.textContent='';
  if(!e||p.length<6){er.textContent='Preencha e-mail e uma senha de 6+ caracteres.';return}
  if(signup){
   const h=$('#hd').value.trim().toLowerCase().replace(/^@/,''),n=$('#nm').value.trim()||h;
+  if(p!==$('#pw2').value){er.textContent='As senhas não são iguais.';return}
   if(!/^[a-z0-9_]{3,20}$/.test(h)){er.textContent='Nick: 3 a 20 letras minúsculas, números ou _';return}
   const {data:ok}=await sb.rpc('handle_disponivel',{h});
   if(!ok){er.textContent='Esse nick já existe. Escolha outro.';return}
@@ -97,52 +130,109 @@ $('#abtn').onclick=async()=>{
 async function start(){
  const {data:{session}}=await sb.auth.getSession();
  if(!session){$('#auth').style.display='flex';$('#app').style.display='none';return}
- me=session.user;
+ me=session.user;if(window.__rec)return;
  const {data}=await sb.from('profiles').select('*').eq('id',me.id).single();prof=data;
  $('#auth').style.display='none';$('#app').style.display='flex';
  await load();
  sb.channel('rt').on('postgres_changes',{event:'*',schema:'public',table:'friendships'},load)
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>{
-   const m=p.new;if(cur&&(m.sender===cur.id||m.receiver===cur.id))addMsg(m)}).subscribe();
+  .on('postgres_changes',{event:'*',schema:'public',table:'group_members'},load)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>{const m=p.new;
+   if(cur&&(cur.t==='g'?m.group_id===cur.id:(!m.group_id&&(m.sender===cur.id||m.receiver===cur.id))))addMsg(m)})
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},p=>{const d=document.getElementById('m'+p.old.id);if(d)d.remove()})
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},p=>{const m=p.new;MM[m.id]=m;const t=document.querySelector('#m'+m.id+' .t');if(t)t.textContent=m.content+(m.edited?' (editada)':'')})
+  .on('postgres_changes',{event:'*',schema:'public',table:'message_reactions'},p=>{const id=(p.new&&p.new.message_id)||(p.old&&p.old.message_id);if(id&&document.getElementById('m'+id))loadRx([id])}).subscribe();
 }
 
 async function load(){
- const {data:f}=await sb.from('friendships').select('*');fr=f||[];
- const ids=[...new Set(fr.flatMap(x=>[x.requester,x.addressee]))].filter(i=>i!==me.id);
+ const [a,b,c]=await Promise.all([sb.from('friendships').select('*'),sb.from('groups').select('*'),sb.from('group_members').select('*')]);
+ fr=a.data||[];gr=b.data||[];gmem=c.data||[];
+ const ids=[...new Set([...fr.flatMap(x=>[x.requester,x.addressee]),...gmem.map(x=>x.user_id)])].filter(i=>i!==me.id);
  pmap={};if(ids.length){const {data:ps}=await sb.from('profiles').select('*').in('id',ids);(ps||[]).forEach(x=>pmap[x.id]=x)}
- render();
+ pmap[me.id]=prof;render();
 }
 const other=f=>pmap[f.requester===me.id?f.addressee:f.requester];
 const ini=p=>esc((p?.display_name||'?')[0].toUpperCase());
-const rowH=(p,extra='',id='')=>`<${id?'button':'div'} class="row gl" ${id?`data-id="${id}"`:''}><div class="av">${ini(p)}</div><div style="flex:1"><b>${esc(p.display_name)}</b><small>@${esc(p.handle)}</small></div>${extra}</${id?'button':'div'}>`;
+const avH=(p,s=44)=>p?.avatar_url?`<img class="av" src="${esc(p.avatar_url)}" style="width:${s}px;height:${s}px;object-fit:cover">`:`<div class="av" style="width:${s}px;height:${s}px;font-size:${s/2.2}px">${ini(p)}</div>`;
+const rowH=(p,extra='',id='',g='')=>`<${id||g?'button':'div'} class="row gl" ${id?`data-id="${id}"`:''} ${g?`data-g="${g}"`:''}>${avH(p)}<div style="flex:1"><b>${esc(p.display_name)}</b><small>${p.handle?'@'+esc(p.handle)+(p.status_text?' · '+esc(p.status_text):''):esc(p.sub||'')}</small></div>${extra}</${id||g?'button':'div'}>`;
+const friends=()=>fr.filter(f=>f.status==='accepted').map(other).filter(Boolean);
 
 function render(){
- const m=$('#main');$('#ttl').textContent={c:'Conversas',a:'Amigos',p:'Perfil'}[tab];
+ const m=$('#main');$('#ttl').textContent={c:'Conversas',a:'Amigos',p:'Perfil',s:'Ajustes'}[tab];
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
  if(tab==='c'){
-  const ok=fr.filter(f=>f.status==='accepted').map(other).filter(Boolean);
-  m.innerHTML=ok.length?ok.map(p=>rowH(p,'',p.id)).join(''):'<div class="empty">Nenhuma conversa ainda.<br>Adicione um amigo pelo @nick na aba Amigos.</div>';
-  m.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openChat(pmap[b.dataset.id]));
+  if(newg){
+   m.innerHTML=`<div class="card gl" style="max-width:none"><input id="gn" placeholder="Nome do grupo" maxlength="40"><div class="sec">Escolha os amigos</div>${friends().map(p=>`<label class="row gl"><input type="checkbox" value="${p.id}" style="width:auto;margin:0">${avH(p,36)}<b style="font-weight:500">${esc(p.display_name)}</b></label>`).join('')||'<div class="empty">Adicione amigos primeiro.</div>'}<div class="err" id="gerr"></div><button class="btn" id="gok">Criar grupo</button><button class="lnk" id="gno">Cancelar</button></div>`;
+   $('#gno').onclick=()=>{newg=false;render()};$('#gok').onclick=createGroup;return}
+  const fl=friends();
+  m.innerHTML=`<button class="btn sm" id="ng" style="margin:0 0 10px">+ Novo grupo</button>`+
+   gr.map(g=>rowH({display_name:g.name,sub:'Grupo · '+gmem.filter(x=>x.group_id===g.id).length+' membros'},'','',g.id)).join('')+
+   (fl.length?fl.map(p=>rowH(p,'',p.id)).join(''):(gr.length?'':'<div class="empty">Nenhuma conversa ainda.<br>Adicione um amigo pelo @nick na aba Amigos.</div>'));
+  $('#ng').onclick=()=>{newg=true;render()};
+  m.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openChat({t:'d',id:b.dataset.id,name:pmap[b.dataset.id].display_name}));
+  m.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>openChat({t:'g',id:+b.dataset.g,name:gr.find(g=>g.id==b.dataset.g).name}));
  }else if(tab==='a'){
   const inc=fr.filter(f=>f.status==='pending'&&f.addressee===me.id),out=fr.filter(f=>f.status==='pending'&&f.requester===me.id);
   m.innerHTML=`<div class="row gl"><input id="addh" placeholder="@nick do amigo" autocapitalize="none" style="margin:0"><button class="btn sm" id="addb">Adicionar</button></div><div class="err" id="aderr"></div>
   ${inc.length?'<div class="sec">Pedidos recebidos</div>'+inc.map(f=>rowH(other(f)||{display_name:'?',handle:'?'},`<button class="btn sm" data-ac="${f.id}">Aceitar</button>`)).join(''):''}
-  ${out.length?'<div class="sec">Pedidos enviados</div>'+out.map(f=>rowH(other(f)||{display_name:'?',handle:'?'},'<small>aguardando</small>')).join(''):''}`;
+  ${out.length?'<div class="sec">Pedidos enviados</div>'+out.map(f=>rowH(other(f)||{display_name:'?',handle:'?'},'<small>aguardando</small>')).join(''):''}
+  <div class="sec">Seus amigos</div>${friends().map(p=>rowH(p,'')).join('')||'<div class="empty">Ninguém ainda.</div>'}`;
   $('#addb').onclick=addFriend;
   m.querySelectorAll('[data-ac]').forEach(b=>b.onclick=async()=>{await sb.from('friendships').update({status:'accepted'}).eq('id',b.dataset.ac);load()});
- }else{
-  m.innerHTML=`<div class="card gl" style="max-width:none"><div class="av" style="width:72px;height:72px;font-size:28px;margin-bottom:12px">${ini(prof)}</div>
-  <input id="pn" value="${esc(prof.display_name)}" placeholder="Nome exibido"><small style="color:var(--mu);margin-left:6px">@${esc(prof.handle)} (o nick não pode ser alterado)</small>
-  <input id="pb" value="${esc(prof.bio||'')}" maxlength="300" placeholder="Bio (até 300 caracteres)" style="margin-top:12px">
-  <div class="err" id="perr"></div><button class="btn" id="psave">Salvar</button><button class="lnk" id="out">Sair da conta</button></div>`;
+ }else if(tab==='p'){
+  m.innerHTML=`<div class="card gl" style="max-width:none;padding:0;overflow:hidden"><div id="bn" style="height:90px;background:${esc(prof.banner_color||'#8b7cf6')}"></div><div style="padding:0 18px 20px">
+  <div style="margin-top:-36px;display:flex;align-items:flex-end;gap:10px">${avH(prof,72)}<button class="btn sm" id="avb">Trocar foto</button><button class="btn sm" id="avx" style="background:var(--gl);color:var(--tx);border:1px solid var(--bd)">Remover</button></div>
+  <input type="file" id="avf" accept="image/*" hidden>
+  <input id="pn" value="${esc(prof.display_name)}" placeholder="Nome exibido" style="margin-top:14px">
+  <small style="color:var(--mu);margin-left:6px">@${esc(prof.handle)} (o nick não pode ser alterado)</small>
+  <input id="pp" value="${esc(prof.pronouns||'')}" placeholder="Pronomes" maxlength="30" style="margin-top:10px">
+  <input id="ps" value="${esc(prof.status_text||'')}" placeholder="Status (ex: ouvindo música)" maxlength="60">
+  <textarea id="pb" maxlength="300" placeholder="Bio" style="width:100%;margin-top:6px;min-height:80px;padding:13px;border-radius:14px;border:1px solid var(--bd);background:rgba(0,0,0,.3);color:var(--tx);font:inherit;font-size:16px">${esc(prof.bio||'')}</textarea>
+  <small id="cnt" style="color:var(--mu);float:right">${(prof.bio||'').length}/300</small>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:14px">Faixa do perfil <input type="color" id="pc" value="${/^#[0-9a-f]{6}$/i.test(prof.banner_color)?prof.banner_color:'#8b7cf6'}" style="width:54px;height:40px;padding:2px"></div>
+  <div class="err" id="perr"></div><button class="btn" id="psave">Salvar</button></div></div>`;
+  $('#pb').oninput=e=>$('#cnt').textContent=e.target.value.length+'/300';
+  $('#pc').oninput=e=>$('#bn').style.background=e.target.value;
+  $('#avb').onclick=()=>$('#avf').click();
+  $('#avf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const u=await upload(f,'avatar');if(u){await saveProf({avatar_url:u});render()}};
+  $('#avx').onclick=async()=>{await saveProf({avatar_url:null});render()};
   $('#psave').onclick=async()=>{const n=$('#pn').value.trim();if(!n){$('#perr').textContent='O nome não pode ficar vazio.';return}
-   const {error}=await sb.from('profiles').update({display_name:n,bio:$('#pb').value}).eq('id',me.id);
-   if(error){$('#perr').textContent=error.message;return}prof.display_name=n;prof.bio=$('#pb').value;$('#perr').style.color='#b9ffd0';$('#perr').textContent='Salvo.'};
+   const r=await saveProf({display_name:n,pronouns:$('#pp').value,status_text:$('#ps').value,bio:$('#pb').value,banner_color:$('#pc').value});
+   $('#perr').style.color=r?'#ffb3c1':'#b9ffd0';$('#perr').textContent=r||'Salvo.'};
+ }else{
+  m.innerHTML=`<div class="card gl" style="max-width:none">
+  <h2>Aparência</h2><div style="display:flex;gap:8px;margin:12px 0"><button class="btn sm" data-th="d">Escuro</button><button class="btn sm" data-th="l">Claro</button></div>
+  <div class="sub">Intensidade do desfoque (vidro)</div><input type="range" id="bl" min="0" max="40" value="${S.bl??24}" style="padding:0">
+  <h2 style="margin-top:18px">Acessibilidade</h2>
+  <label class="row"><input type="checkbox" id="hc" ${S.hc?'checked':''} style="width:auto;margin:0"> Alto contraste (desliga o vidro)</label>
+  <label class="row"><input type="checkbox" id="rm" ${S.rm?'checked':''} style="width:auto;margin:0"> Reduzir movimento</label>
+  <h2 style="margin-top:12px">Conta</h2><p class="sub">${esc(me.email)}</p><button class="btn" id="out">Sair da conta</button><button class="lnk" id="del" style="color:#ff8fa3;margin-top:18px">Apagar minha conta</button></div>`;
+  m.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{S.th=b.dataset.th;saveS()});
+  $('#bl').oninput=e=>{S.bl=+e.target.value;saveS()};$('#hc').onchange=e=>{S.hc=e.target.checked;saveS()};$('#rm').onchange=e=>{S.rm=e.target.checked;saveS()};
   $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
+  $('#del').onclick=async()=>{if(prompt('Isto apaga sua conta, seus amigos, mensagens e grupos que você criou, para sempre. Digite APAGAR para confirmar:')!=='APAGAR')return;
+   const {error}=await sb.rpc('delete_my_account');if(error){alert('Não foi possível apagar: '+error.message);return}
+   await sb.auth.signOut();alert('Conta apagada.');location.reload()};
  }
 }
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;newg=false;render()});
 
+async function saveProf(o){const {error}=await sb.from('profiles').update(o).eq('id',me.id);if(error)return error.message;Object.assign(prof,o);pmap[me.id]=prof;return ''}
+async function upload(f,kind){
+ if(f.size>25*1024*1024){alert('Arquivo grande demais (máx. 25 MB).');return null}
+ const path=`${me.id}/${kind}_${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+ const {error}=await sb.storage.from('media').upload(path,f);
+ if(error){alert('Falha no envio: '+error.message);return null}
+ return sb.storage.from('media').getPublicUrl(path).data.publicUrl;
+}
+async function createGroup(){
+ const n=$('#gn').value.trim(),er=$('#gerr'),ids=[...document.querySelectorAll('#main input[type=checkbox]:checked')].map(c=>c.value);
+ if(!n){er.textContent='Dê um nome ao grupo.';return}if(!ids.length){er.textContent='Escolha ao menos 1 amigo.';return}
+ const {data:g,error}=await sb.from('groups').insert({name:n,owner:me.id}).select().single();
+ if(error){er.textContent=error.message;return}
+ const {error:e2}=await sb.from('group_members').insert([me.id,...ids].map(u=>({group_id:g.id,user_id:u})));
+ if(e2){er.textContent=e2.message;return}
+ newg=false;load();
+}
 async function addFriend(){
  const h=$('#addh').value.trim().toLowerCase().replace(/^@/,''),er=$('#aderr');er.textContent='';
  if(!h)return;if(h===prof.handle){er.textContent='Esse é o seu próprio nick.';return}
@@ -152,24 +242,50 @@ async function addFriend(){
  if(error){er.textContent=error.code==='23505'?'Pedido já enviado.':error.message;return}
  load();
 }
-
-async function openChat(p){
- cur=p;$('#cname').textContent=p.display_name;$('#chat').style.display='flex';$('#msgs').innerHTML='';
- const {data}=await sb.from('messages').select('*').or(`and(sender.eq.${me.id},receiver.eq.${p.id}),and(sender.eq.${p.id},receiver.eq.${me.id})`).order('created_at').limit(200);
- (data||[]).forEach(addMsg);
+async function openChat(c){
+ cur=c;$('#cname').textContent=c.name;$('#chat').style.display='flex';$('#msgs').innerHTML='';
+ let q=sb.from('messages').select('*');
+ q=c.t==='g'?q.eq('group_id',c.id):q.is('group_id',null).or(`and(sender.eq.${me.id},receiver.eq.${c.id}),and(sender.eq.${c.id},receiver.eq.${me.id})`);
+ const {data}=await q.order('created_at').limit(200);(data||[]).forEach(addMsg);loadRx((data||[]).map(m=>m.id));
 }
-const seen=new Set();
 function addMsg(m){
  if(document.getElementById('m'+m.id))return;
- const d=document.createElement('div');d.id='m'+m.id;d.className='m '+(m.sender===me.id?'me':'th');d.textContent=m.content;
+ const mine=m.sender===me.id,d=document.createElement('div');d.id='m'+m.id;d.className='m '+(mine?'me':'th');
+ if(cur?.t==='g'&&!mine){const s=document.createElement('small');s.style.cssText='display:block;color:var(--ac)';s.textContent=pmap[m.sender]?.display_name||'?';d.appendChild(s)}
+ if(m.media_url){const v=/\.(mp4|webm|mov)$/i.test(m.media_url);const e=document.createElement(v?'video':'img');e.src=m.media_url;if(v)e.controls=true;e.style.cssText='max-width:100%;border-radius:12px;display:block';d.appendChild(e)}
+ if(!m.media_url||m.content!=='📷'){const t=document.createElement('span');t.className='t';t.textContent=m.content+(m.edited?' (editada)':'');d.appendChild(t)}
+ MM[m.id]=m;d.onclick=()=>menu(m.id);
  const b=$('#msgs');b.appendChild(d);b.scrollTop=b.scrollHeight;
 }
+const MM={},EM=['👍','❤️','😂','😮','😢','🔥'];let rx={};
+function chips(id){const d=document.getElementById('m'+id);if(!d)return;let c=d.querySelector('.rx');if(!c){c=document.createElement('div');c.className='rx';d.appendChild(c)}
+ const g={};(rx[id]||[]).forEach(r=>{(g[r.emoji]=g[r.emoji]||[]).push(r.user_id)});
+ c.innerHTML=Object.entries(g).map(([e,u])=>`<button class="chip${u.includes(me.id)?' on':''}" data-e="${e}">${e} ${u.length}</button>`).join('');
+ c.querySelectorAll('.chip').forEach(b=>b.onclick=ev=>{ev.stopPropagation();react(id,b.dataset.e)})}
+async function loadRx(ids){if(!ids.length)return;const {data}=await sb.from('message_reactions').select('*').in('message_id',ids);
+ ids.forEach(i=>rx[i]=[]);(data||[]).forEach(r=>rx[r.message_id].push(r));ids.forEach(chips)}
+async function react(id,e){const had=(rx[id]||[]).some(r=>r.user_id===me.id&&r.emoji===e);
+ if(had)await sb.from('message_reactions').delete().match({message_id:id,user_id:me.id,emoji:e});
+ else await sb.from('message_reactions').insert({message_id:id,user_id:me.id,emoji:e});
+ loadRx([id])}
+function menu(id){const m=MM[id],s=$('#sheet'),mine=m.sender===me.id;
+ s.innerHTML=`<div class="gl sh"><div class="ems">${EM.map(e=>`<button data-e="${e}">${e}</button>`).join('')}</div>${mine&&!m.media_url?'<button class="btn" id="ed">Editar mensagem</button>':''}${mine?'<button class="btn" id="dl" style="background:#ff8fa3">Apagar mensagem</button>':''}<button class="lnk" id="cl">Fechar</button></div>`;
+ s.style.display='flex';const close=()=>s.style.display='none';
+ s.onclick=e=>{if(e.target===s)close()};$('#cl').onclick=close;
+ s.querySelectorAll('.ems button').forEach(b=>b.onclick=()=>{close();react(id,b.dataset.e)});
+ if(mine){$('#dl').onclick=async()=>{close();if(confirm('Apagar esta mensagem?')){await sb.from('messages').delete().eq('id',id);const d=document.getElementById('m'+id);if(d)d.remove()}};
+  if($('#ed'))$('#ed').onclick=async()=>{close();const t=prompt('Editar mensagem:',m.content);if(t===null)return;const n=t.trim();if(!n||n===m.content)return;
+   const {error}=await sb.from('messages').update({content:n,edited:true}).eq('id',id);if(error){alert('Não foi possível editar: '+error.message);return}
+   m.content=n;m.edited=true;const x=document.querySelector('#m'+id+' .t');if(x)x.textContent=n+' (editada)'}}}
 $('#back').onclick=()=>{cur=null;$('#chat').style.display='none'};
-async function send(){
- const t=$('#mi').value.trim();if(!t||!cur)return;$('#mi').value='';
- const {data,error}=await sb.from('messages').insert({sender:me.id,receiver:cur.id,content:t}).select().single();
+async function send(media){
+ const t=media?'📷':$('#mi').value.trim();if(!t||!cur)return;if(!media)$('#mi').value='';
+ const row={sender:me.id,content:t,media_url:media||null};if(cur.t==='g')row.group_id=cur.id;else row.receiver=cur.id;
+ const {data,error}=await sb.from('messages').insert(row).select().single();
  if(error){alert('Não foi possível enviar: '+error.message);return}addMsg(data);
 }
-$('#send').onclick=send;$('#mi').onkeydown=e=>{if(e.key==='Enter')send()};
+$('#send').onclick=()=>send();$('#mi').onkeydown=e=>{if(e.key==='Enter')send()};
+$('#att').onclick=()=>$('#fi').click();
+$('#fi').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const u=await upload(f,'msg');if(u)send(u)};
 start();
 </script></body></html>
